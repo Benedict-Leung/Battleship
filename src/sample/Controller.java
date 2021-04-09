@@ -2,7 +2,6 @@ package sample;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.geometry.HPos;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -10,6 +9,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -19,14 +19,14 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 public class Controller extends Thread {
-   @FXML public Button connect;
-   @FXML public Button exit;
+    @FXML public Button connect;
+    @FXML public Button exit;
 
-   private Stage stage;
-   GridPane container = new GridPane();
-   private GridPane board = null;
-   private int length = 5;
-
+    private Stage stage;
+    GridPane container = new GridPane();
+    private GridPane board = null;
+    private int length = 5;
+    private String orienatation = "horizontal";
 
     private Socket socket = null;
     private ObjectOutputStream networkOut = null;
@@ -74,6 +74,7 @@ public class Controller extends Thread {
 
     public void init() {
         Platform.runLater(() -> {
+            container.getChildren().removeAll(container.getChildren());
             ComboBox<String> comboBox = new ComboBox<>();
             int[] lengthOfShips = {5, 4, 3, 3, 2};
 
@@ -89,50 +90,80 @@ public class Controller extends Thread {
             });
             comboBox.getSelectionModel().select(0);
 
-            board = new GridPane();
+            Button rotate = new Button("Rotate");
+            rotate.setOnMouseClicked(e -> orienatation = (orienatation.equalsIgnoreCase("horizontal")) ? "vertical" : "horizontal");
 
+            HBox options = new HBox();
+            options.getChildren().add(comboBox);
+            options.getChildren().add(rotate);
+
+            board = new GridPane();
             for (int i = 0; i < 10; i++) {
                 for (int j = 0; j < 10; j++) {
                     Button button = new Button();
                     button.setPrefSize(50, 50);
                     button.setMaxSize(50, 50);
                     button.setMinSize(50, 50);
+                    button.getStyleClass().add("board");
                     button.setOnMouseEntered(e -> displayShip((Button) e.getSource()));
+                    button.setOnMouseExited(e -> clearBoard());
 
-                    if (i == 0) {
+                    if (i == 0)
                         button.getStyleClass().add("firstRow");
-                    }
-
-                    if (j == 0) {
+                    if (j == 0)
                         button.getStyleClass().add("firstColumn");
-                    }
                     board.add(button, i, j);
                 }
             }
-            container.add(comboBox, 0, 0);
+
+            container.add(options, 0, 0);
             container.add(board, 0, 1);
         });
     }
 
     public void displayShip(Button source) {
         clearBoard();
-        source.getStyleClass().add("selected");
         int sourceRow = GridPane.getRowIndex(source);
         int sourceCol = GridPane.getColumnIndex(source);
 
-        for (int k = 1; k < length; k++) {
+        if (orienatation.equalsIgnoreCase("horizontal")) {
+            if (sourceCol < length / 2) {
+                sourceCol += length / 2 - sourceCol;
+            } else if (9 - sourceCol < length / 2) {
+                sourceCol -= Math.ceil((double) length / 2) - (10 - sourceCol);
+            }
+        } else {
+            if (sourceRow < length / 2) {
+                sourceRow += length / 2 - sourceRow;
+            } else if (9 - sourceRow < length / 2) {
+                sourceRow -= Math.ceil((double) length / 2) - (10 - sourceRow);
+            }
+        }
+
+        for (int k = 0; k < length; k++) {
             for (Node node : board.getChildren()) {
                 if (!node.getStyleClass().contains("selected")) {
-                    if (GridPane.getColumnIndex(node) == sourceCol - Math.ceil((double) k / 2) && GridPane.getRowIndex(node) == sourceRow) {
-                        node.getStyleClass().add("selected");
-                        break;
-                    } else if (GridPane.getColumnIndex(node) == sourceCol + Math.ceil((double) k / 2) && GridPane.getRowIndex(node) == sourceRow) {
-                        node.getStyleClass().add("selected");
-                        break;
+                    if (orienatation.equalsIgnoreCase("horizontal")) {
+                        if (GridPane.getColumnIndex(node) == sourceCol - Math.ceil((double) k / 2) && GridPane.getRowIndex(node) == sourceRow) {
+                            node.getStyleClass().add("selected");
+                            break;
+                        } else if (GridPane.getColumnIndex(node) == sourceCol + Math.ceil((double) k / 2) && GridPane.getRowIndex(node) == sourceRow) {
+                            node.getStyleClass().add("selected");
+                            break;
+                        }
+                    } else {
+                        if (GridPane.getRowIndex(node) == sourceRow - Math.ceil((double) k / 2) && GridPane.getColumnIndex(node) == sourceCol) {
+                            node.getStyleClass().add("selected");
+                            break;
+                        } else if (GridPane.getRowIndex(node) == sourceRow + Math.ceil((double) k / 2) && GridPane.getColumnIndex(node) == sourceCol) {
+                            node.getStyleClass().add("selected");
+                            break;
+                        }
                     }
                 }
             }
         }
+
     }
 
     public void clearBoard() {
