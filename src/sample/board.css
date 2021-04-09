@@ -1,0 +1,21 @@
+Button {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #000000;
+    -fx-border-width: 0 1 1 0;
+}
+
+Button.firstRow {
+    -fx-border-width: 0 1 1 1;
+}
+
+Button.firstColumn {
+    -fx-border-width: 1 1 1 0;
+}
+
+Button.firstRow.firstColumn {
+    -fx-border-width: 1 1 1 1;
+}
+
+Button.selected {
+    -fx-background-color: #E3E3E3;
+}

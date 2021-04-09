@@ -17,11 +17,15 @@ public class Main extends Application {
         Controller controller = loader.getController();
         primaryStage.setScene(new Scene(root, 700, 700));
         primaryStage.setTitle("Battleship");
+        primaryStage.setResizable(false);
         primaryStage.show();
 
-        primaryStage.setOnCloseRequest(e -> System.exit(0));
+        primaryStage.setOnCloseRequest(e -> {
+            controller.disconnect();
+            System.exit(0);
+        });
 
-        controller.init();
+        controller.init(primaryStage);
     }
 
     public static void main(String[] args) {

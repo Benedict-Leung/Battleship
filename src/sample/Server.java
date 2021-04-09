@@ -24,8 +24,15 @@ public class Server {
                 numClients++;
 
                 if (numClients % 2 == 0) {
-                    Room room = new Room(waitingClient, client);
-                    System.out.println("Starting room");
+                    try {
+                        waitingClient.out.writeObject("Connect");
+                        Room room = new Room(waitingClient, client);
+                        System.out.println("Starting room");
+                    } catch (Exception e) {
+                        System.out.println("User Disconnected");
+                        waitingClient = client;
+                        numClients--;
+                    }
                 } else {
                     waitingClient = client;
                 }

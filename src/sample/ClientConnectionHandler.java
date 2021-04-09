@@ -20,22 +20,13 @@ public class ClientConnectionHandler extends Thread {
         } catch (IOException e) {
             System.err.println("IOException while opening a read/write connection");
         }
+        this.start();
     }
 
     public void run() {
-        try {
-            String command = (String) in.readObject();
-            System.out.println(command);
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
     }
 
-    public void send(Object object) {
-        try {
-            out.writeObject(object);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void send(Object object) throws IOException {
+        out.writeObject(object);
     }
 }
