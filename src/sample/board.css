@@ -1,21 +1,45 @@
 Button.board {
     -fx-background-color: #FFFFFF;
     -fx-border-color: #000000;
-    -fx-border-width: 0 1 1 0;
+    -fx-border-width: 0.5;
 }
 
 Button.firstRow {
-    -fx-border-width: 0 1 1 1;
+    -fx-border-width: 1 0.5 0.5 0.5;
 }
 
 Button.firstColumn {
-    -fx-border-width: 1 1 1 0;
+    -fx-border-width: 0.5 0.5 0.5 1;
+}
+
+Button.lastRow {
+    -fx-border-width: 0.5 0.5 1 0.5;
+}
+
+Button.lastColumn {
+    -fx-border-width: 0.5 1 0.5 0.5;
 }
 
 Button.firstRow.firstColumn {
-    -fx-border-width: 1 1 1 1;
+    -fx-border-width: 1 0.5 0.5 1;
+}
+
+Button.firstRow.lastColumn {
+    -fx-border-width: 1 1 0.5 0.5;
+}
+
+Button.lastRow.firstColumn {
+    -fx-border-width: 0.5 0.5 1 1;
+}
+
+Button.lastRow.lastColumn {
+    -fx-border-width: 0.5 1 1 0.5;
 }
 
 Button.selected {
     -fx-background-color: #E3E3E3;
+}
+
+Button.ship {
+    -fx-background-color: #90EE90;
 }

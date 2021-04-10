@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class ClientConnectionHandler extends Thread {
+    private Room room;
     protected Socket socket;
     protected ObjectOutputStream out = null;
     protected ObjectInputStream in = null;
@@ -24,9 +25,40 @@ public class ClientConnectionHandler extends Thread {
     }
 
     public void run() {
+        while (true) {
+            try {
+                String command = (String) in.readObject();
+
+                if (command.equalsIgnoreCase("READY")) {
+                    int[][] board = (int[][]) in.readObject();
+                    room.ready(this, board);
+                }
+                System.out.println(command);
+            } catch (IOException | ClassNotFoundException e) {
+                this.disconnect();
+                break;
+            }
+        }
     }
 
     public void send(Object object) throws IOException {
         out.writeObject(object);
     }
+
+    public void setRoom(Room room) {
+        this.room = room;
+    }
+
+    public void disconnect() {
+        try {
+            in.close();
+            out.close();
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            room.disconnect();
+        }
+    }
+
 }
