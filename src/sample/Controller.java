@@ -9,6 +9,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
@@ -27,7 +28,8 @@ public class Controller extends Thread {
 
     private Stage stage;
     private GridPane container = new GridPane();
-    private GridPane board = new GridPane();
+    //private GridPane board = new GridPane();
+    private Board board = new Board();
     private int length = 5;
     private String orientation = "horizontal";
     private Label messageLabel;
@@ -123,12 +125,12 @@ public class Controller extends Thread {
             container.add(messageLabel, 0, 0);
             GridPane.setHalignment(messageLabel, HPos.CENTER);
             container.add(options, 0, 1);
-            container.add(board, 0, 2);
+            container.add(board.getGridPane(), 0, 2);
         });
     }
 
     public void displayShip(Button source) {
-        clearBoard();
+        board.clear();
         int sourceRow = GridPane.getRowIndex(source);
         int sourceCol = GridPane.getColumnIndex(source);
 
@@ -183,44 +185,22 @@ public class Controller extends Thread {
         String shipName = comboBox.getValue().toLowerCase().replaceAll("\s", "");
 
         for (Node node : selectedNodes) {
-            node.getStyleClass().add("ship");
-            node.getStyleClass().add(shipName);
+            //node.getStyleClass().add("ship");
+            //node.getStyleClass().add(shipName);
+            // Abstracts the process of creating a ship so that it's more centralized within the Board class
+            board.placeShipAtNode(node, shipName);
         }
         lengthOfShips.remove(comboBox.getSelectionModel().getSelectedIndex());
         comboBox.getItems().remove(comboBox.getSelectionModel().getSelectedItem());
         comboBox.getSelectionModel().selectNext();
     }
 
-    public void clearBoard() {
-        for (Node node : board.getChildren())
-            node.getStyleClass().remove("selected");
-    }
-
     public void resetBoard() {
-        board.getChildren().removeAll(board.getChildren());
+        board.reset();
+        board.addButtonEventHandler(MouseEvent.MOUSE_ENTERED, e -> displayShip((Button)e.getSource()));
+        board.addButtonEventHandler(MouseEvent.MOUSE_EXITED, e -> board.clear());
+        board.addButtonEventHandler(MouseEvent.MOUSE_CLICKED, e -> placeShip());
 
-        for (int i = 0; i < 10; i++) {
-            for (int j = 0; j < 10; j++) {
-                Button button = new Button();
-                button.setPrefSize(50, 50);
-                button.setMaxSize(50, 50);
-                button.setMinSize(50, 50);
-                button.getStyleClass().add("board");
-                button.setOnMouseEntered(e -> displayShip((Button) e.getSource()));
-                button.setOnMouseExited(e -> clearBoard());
-                button.setOnMouseClicked(e -> placeShip());
-
-                if (j == 0)
-                    button.getStyleClass().add("firstRow");
-                if (i == 0)
-                    button.getStyleClass().add("firstColumn");
-                if (j == 9)
-                    button.getStyleClass().add("lastRow");
-                if (i == 9)
-                    button.getStyleClass().add("lastColumn");
-                board.add(button, i, j);
-            }
-        }
         lengthOfShips = new ArrayList<>(Arrays.asList(5, 4, 3, 3, 2));
         comboBox.getItems().removeAll(comboBox.getItems());
         comboBox.getItems().add("Aircraft Carrier");
@@ -232,21 +212,12 @@ public class Controller extends Thread {
     }
 
     public void ready() {
-        ArrayList<String> shipNames = new ArrayList<>(Arrays.asList("aircraftcarrier", "battleship", "submarine", "cruiser", "destroyer"));
         if (comboBox.getItems().size() == 0) {
             try {
-                int[][] parseBoard = new int[10][10];
-                for (Node node : board.getChildren()) {
-                    if (node.getStyleClass().contains("ship")) {
-                        for (String style : node.getStyleClass()) {
-                            if (shipNames.contains(style)) {
-                                parseBoard[GridPane.getRowIndex(node)][GridPane.getColumnIndex(node)] = shipNames.indexOf(style);
-                            }
-                        }
-                    } else {
-                        parseBoard[GridPane.getRowIndex(node)][GridPane.getColumnIndex(node)] = -1;
-                    }
-                }
+                int[][] parseBoard = board.getIntArray();
+                int[][] parseBoard2 = Board.fromIntArray(parseBoard).getIntArray();
+                System.out.println(Arrays.deepToString(parseBoard));
+                System.out.println(Arrays.deepToString(parseBoard2));
                 networkOut.writeObject("READY");
                 networkOut.writeObject(parseBoard);
             } catch (IOException e) {
