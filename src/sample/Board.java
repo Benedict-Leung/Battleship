@@ -14,6 +14,14 @@ import java.util.Arrays;
 
 public class Board {
     private final GridPane gridPane;
+    // If true, all buttons which are moused over will be highlighted
+    private boolean showSingleSelection = false;
+    // If true and a ship is selected, then all tiles where this ship would be placed will be highlighted
+    private boolean showShipSelection = false;
+    // Whether ships that are placed should be done horizontally or vertically
+    private String shipPlacementOrientation = "horizontal";
+    // The current ship type that should be placed
+    private int selectedShip = 0;
 
     public static final int BOARD_SIZE = 10;
     public static final ArrayList<String> SHIP_NAMES = new ArrayList<>(Arrays.asList("Aircraft Carrier", "Battleship", "Submarine", "Cruiser", "Destroyer"));
@@ -64,6 +72,31 @@ public class Board {
     }
 
     /**
+     * Automatically places the currently selected ship at all currently selected squares on the board.
+     * @return True if the operation succeeded, false if it was blocked.
+     */
+    public boolean placeShipAtSelection() {
+        ArrayList<Node> selectedNodes = new ArrayList<>();
+
+        for (Node node : getChildren()) {
+            if (node.getStyleClass().contains("selected")) {
+                if (!node.getStyleClass().contains("ship")) {
+                    selectedNodes.add(node);
+                } else {
+                    return false;
+                }
+            }
+        }
+        String shipName = SHIP_STYLES.get(selectedShip);
+
+        for (Node node : selectedNodes) {
+            placeShipAtNode(node, shipName);
+        }
+
+        return true;
+    }
+
+    /**
      * Creates a missile on a Node which is a child of this Board.
      * @param node A child of the GridPane belonging to this Board.
      * @param missileStatus
@@ -104,11 +137,6 @@ public class Board {
                 button.setMinSize(50, 50);
                 button.getStyleClass().add("board");
 
-                // These are now set via addButtonEventHandler
-                //button.setOnMouseEntered(e -> displayShip((Button) e.getSource()));
-                //button.setOnMouseExited(e -> clearBoard());
-                //button.setOnMouseClicked(e -> placeShip());
-
                 if (j == 0)
                     button.getStyleClass().add("firstRow");
                 if (i == 0)
@@ -118,7 +146,74 @@ public class Board {
                 if (i == 9)
                     button.getStyleClass().add("lastColumn");
                 gridPane.add(button, i, j);
+
+                button.addEventHandler(MouseEvent.MOUSE_ENTERED, e -> onButtonMouseEntered(e));
+                button.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> onButtonMouseClicked(e));
+                button.addEventHandler(MouseEvent.MOUSE_EXITED, e -> onButtonMouseExited(e));
             }
+        }
+    }
+
+    protected void onButtonMouseEntered(MouseEvent e) {
+        if (showSingleSelection) {
+            Node node = (Node)e.getSource();
+            if (!node.getStyleClass().contains("selected"))
+                node.getStyleClass().add("selected");
+        } else if (showShipSelection) {
+            clear();
+            Button source = (Button)e.getSource();
+            int sourceRow = GridPane.getRowIndex(source);
+            int sourceCol = GridPane.getColumnIndex(source);
+
+            if (selectedShip == -1) {
+                throw new RuntimeException("Invalid ship type was attempted to be placed!");
+            }
+            int length = SHIP_LENGTHS.get(selectedShip);
+
+            if (shipPlacementOrientation.equalsIgnoreCase("horizontal")) {
+                if (sourceCol < length / 2) {
+                    sourceCol += length / 2 - sourceCol;
+                } else if (9 - sourceCol < length / 2) {
+                    sourceCol -= Math.ceil((double) length / 2) - (10 - sourceCol);
+                }
+            } else {
+                if (sourceRow < length / 2) {
+                    sourceRow += length / 2 - sourceRow;
+                } else if (9 - sourceRow < length / 2) {
+                    sourceRow -= Math.ceil((double) length / 2) - (10 - sourceRow);
+                }
+            }
+
+            for (int k = 0; k < length; k++) {
+                for (Node node : getChildren()) {
+                    if (!node.getStyleClass().contains("selected")) {
+                        if (shipPlacementOrientation.equalsIgnoreCase("horizontal")) {
+                            if (GridPane.getColumnIndex(node) == sourceCol - Math.ceil((double) k / 2) && GridPane.getRowIndex(node) == sourceRow
+                                    || GridPane.getColumnIndex(node) == sourceCol + Math.ceil((double) k / 2) && GridPane.getRowIndex(node) == sourceRow) {
+                                node.getStyleClass().add("selected");
+                                break;
+                            }
+                        } else {
+                            if (GridPane.getRowIndex(node) == sourceRow - Math.ceil((double) k / 2) && GridPane.getColumnIndex(node) == sourceCol
+                                    || GridPane.getRowIndex(node) == sourceRow + Math.ceil((double) k / 2) && GridPane.getColumnIndex(node) == sourceCol) {
+                                node.getStyleClass().add("selected");
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    protected void onButtonMouseClicked(MouseEvent e) {
+
+    }
+
+    protected void onButtonMouseExited(MouseEvent e) {
+        if (showSingleSelection) {
+            Node node = (Node)e.getSource();
+            node.getStyleClass().remove("selected");
         }
     }
 
@@ -169,5 +264,45 @@ public class Board {
         }
 
         return board;
+    }
+
+    public boolean getShowSingleSelection() {
+        return showSingleSelection;
+    }
+
+    public void setShowSingleSelection(boolean value) {
+        showSingleSelection = value;
+        if (!value) {
+            // Reset any selections which may still exist
+            clear();
+        }
+    }
+
+    public boolean getShowShipSelection() {
+        return showShipSelection;
+    }
+
+    public void setShowShipSelection(boolean value) {
+        showShipSelection = value;
+        if (!value) {
+            // Reset any selections which may still exist
+            clear();
+        }
+    }
+
+    public String getShipPlacementOrientation() {
+        return shipPlacementOrientation;
+    }
+
+    public void toggleShipPlacementOrientation() {
+        shipPlacementOrientation = shipPlacementOrientation.equalsIgnoreCase("horizontal") ? "vertical" : "horizontal";
+    }
+
+    public int getSelectedShip() {
+        return selectedShip;
+    }
+
+    public void setSelectedShip(int value) {
+        selectedShip = value;
     }
 }

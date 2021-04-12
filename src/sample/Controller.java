@@ -1,6 +1,7 @@
 package sample;
 
 import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.HPos;
 import javafx.geometry.Pos;
@@ -30,8 +31,8 @@ public class Controller extends Thread {
     private GridPane container = new GridPane();
     //private GridPane board = new GridPane();
     private Board board = new Board();
-    private int length = 5;
-    private String orientation = "horizontal";
+    //private int length = 5;
+    //private String orientation = "horizontal";
     private Label messageLabel;
     private Label responseLabel;
     private ComboBox<String> comboBox = new ComboBox<>();
@@ -102,14 +103,15 @@ public class Controller extends Thread {
             comboBox.setOnAction((event) -> {
                 int index = comboBox.getSelectionModel().getSelectedIndex();
                 if (index != -1) {
-                    length = lengthOfShips.get(index);
+                    board.setSelectedShip(0);
                 } else {
-                    length = 0;
+                    board.setSelectedShip(-1);
                 }
             });
 
             Button rotate = new Button("Rotate");
-            rotate.setOnMouseClicked(e -> orientation = (orientation.equalsIgnoreCase("horizontal")) ? "vertical" : "horizontal");
+            //rotate.setOnMouseClicked(e -> orientation = (orientation.equalsIgnoreCase("horizontal")) ? "vertical" : "horizontal");
+            rotate.setOnMouseClicked(e -> board.toggleShipPlacementOrientation());
 
             Button resetBoard = new Button("Reset Board");
             resetBoard.setOnMouseClicked(e -> resetBoard());
@@ -137,46 +139,6 @@ public class Controller extends Thread {
         });
     }
 
-    public void displayShip(Button source) {
-        board.clear();
-        int sourceRow = GridPane.getRowIndex(source);
-        int sourceCol = GridPane.getColumnIndex(source);
-
-        if (orientation.equalsIgnoreCase("horizontal")) {
-            if (sourceCol < length / 2) {
-                sourceCol += length / 2 - sourceCol;
-            } else if (9 - sourceCol < length / 2) {
-                sourceCol -= Math.ceil((double) length / 2) - (10 - sourceCol);
-            }
-        } else {
-            if (sourceRow < length / 2) {
-                sourceRow += length / 2 - sourceRow;
-            } else if (9 - sourceRow < length / 2) {
-                sourceRow -= Math.ceil((double) length / 2) - (10 - sourceRow);
-            }
-        }
-
-        for (int k = 0; k < length; k++) {
-            for (Node node : board.getChildren()) {
-                if (!node.getStyleClass().contains("selected")) {
-                    if (orientation.equalsIgnoreCase("horizontal")) {
-                        if (GridPane.getColumnIndex(node) == sourceCol - Math.ceil((double) k / 2) && GridPane.getRowIndex(node) == sourceRow
-                                || GridPane.getColumnIndex(node) == sourceCol + Math.ceil((double) k / 2) && GridPane.getRowIndex(node) == sourceRow) {
-                            node.getStyleClass().add("selected");
-                            break;
-                        }
-                    } else {
-                        if (GridPane.getRowIndex(node) == sourceRow - Math.ceil((double) k / 2) && GridPane.getColumnIndex(node) == sourceCol
-                                || GridPane.getRowIndex(node) == sourceRow + Math.ceil((double) k / 2) && GridPane.getColumnIndex(node) == sourceCol) {
-                            node.getStyleClass().add("selected");
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     /**
      * After player clicks ready prepares for the game by showing both their board and opponents
      */
@@ -185,7 +147,11 @@ public class Controller extends Thread {
 
         stage.setWidth(1150);
         container.getChildren().remove(options);
+
+
+        board.setShowShipSelection(false);
         opponentBoard.reset();
+        opponentBoard.setShowSingleSelection(true);
 
         Label opponentsMessageLabel = new Label("Opponents Ships");
         GridPane.setHalignment(opponentsMessageLabel, HPos.CENTER);
@@ -193,35 +159,6 @@ public class Controller extends Thread {
 
         container.add(opponentBoard.getGridPane(), 1, 2);
         messageLabel.setText("Your Ships");
-    }
-
-    /**
-     * Mark a ship as placed at the selected nodes
-     */
-    public void placeShip() {
-        ArrayList<Node> selectedNodes = new ArrayList<>();
-
-        for (Node node : board.getChildren()) {
-            if (node.getStyleClass().contains("selected")) {
-                if (!node.getStyleClass().contains("ship")) {
-                    selectedNodes.add(node);
-                } else {
-                    messageLabel.setText("Space is already occupied");
-                    return;
-                }
-            }
-        }
-        String shipName = comboBox.getValue().toLowerCase().replaceAll("\s", "");
-
-        for (Node node : selectedNodes) {
-            //node.getStyleClass().add("ship");
-            //node.getStyleClass().add(shipName);
-            // Abstracts the process of creating a ship so that it's more centralized within the Board class
-            board.placeShipAtNode(node, shipName);
-        }
-        lengthOfShips.remove(comboBox.getSelectionModel().getSelectedIndex());
-        comboBox.getItems().remove(comboBox.getSelectionModel().getSelectedItem());
-        comboBox.getSelectionModel().selectNext();
     }
 
     /**
@@ -260,9 +197,25 @@ public class Controller extends Thread {
 
     public void resetBoard() {
         board.reset();
-        board.addButtonEventHandler(MouseEvent.MOUSE_ENTERED, e -> displayShip((Button)e.getSource()));
-        board.addButtonEventHandler(MouseEvent.MOUSE_EXITED, e -> board.clear());
-        board.addButtonEventHandler(MouseEvent.MOUSE_CLICKED, e -> placeShip());
+        board.setShowShipSelection(true);
+        board.addButtonEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            boolean result = board.placeShipAtSelection();
+            if (result) {
+                // Ship was successfully placed
+                lengthOfShips.remove(comboBox.getSelectionModel().getSelectedIndex());
+                comboBox.getItems().remove(comboBox.getSelectionModel().getSelectedItem());
+                if (comboBox.getItems().size() > 0) {
+                    // There are more ships we can place
+                    comboBox.getSelectionModel().selectNext();
+                } else {
+                    // There are no more ships we can place
+                    board.setShowShipSelection(false);
+                }
+                messageLabel.setText("Place your ships");
+            } else {
+                messageLabel.setText("Space is already occupied");
+            }
+        });
 
         lengthOfShips = new ArrayList<>(Arrays.asList(5, 4, 3, 3, 2));
         comboBox.getItems().removeAll(comboBox.getItems());
@@ -278,9 +231,6 @@ public class Controller extends Thread {
         if (comboBox.getItems().size() == 0) {
             try {
                 int[][] parseBoard = board.getIntArray();
-                int[][] parseBoard2 = Board.fromIntArray(parseBoard).getIntArray();
-                System.out.println(Arrays.deepToString(parseBoard));
-                System.out.println(Arrays.deepToString(parseBoard2));
                 networkOut.writeObject("READY");
                 networkOut.writeObject(parseBoard);
                 showBothBoards();
