@@ -36,6 +36,10 @@ public class Controller extends Thread {
     private ComboBox<String> comboBox = new ComboBox<>();
     private ArrayList<Integer> lengthOfShips = new ArrayList<>(Arrays.asList(5, 4, 3, 3, 2));
 
+    private Board opponentBoard = new Board();
+
+    HBox options = new HBox();
+
     private Socket socket = null;
     private ObjectOutputStream networkOut = null;
     private ObjectInputStream networkIn = null;
@@ -114,7 +118,7 @@ public class Controller extends Thread {
 
             messageLabel = new Label("Place your ships");
 
-            HBox options = new HBox();
+            //HBox options = new HBox();
             options.getChildren().add(comboBox);
             options.getChildren().add(rotate);
             options.getChildren().add(resetBoard);
@@ -169,6 +173,24 @@ public class Controller extends Thread {
         }
     }
 
+    /**
+     * After player clicks ready prepares for the game by showing both their board and opponents
+     */
+    public void showBothBoards(){
+        System.out.println("Both boards test!");
+
+        stage.setWidth(1150);
+        container.getChildren().remove(options);
+        opponentBoard.reset();
+
+        Label opponentsMessageLabel = new Label("Opponents Ships");
+        GridPane.setHalignment(opponentsMessageLabel, HPos.CENTER);
+        container.add(opponentsMessageLabel, 1, 0);
+
+        container.add(opponentBoard.getGridPane(), 1, 2);
+        messageLabel.setText("Your Ships");
+    }
+
     public void placeShip() {
         ArrayList<Node> selectedNodes = new ArrayList<>();
 
@@ -220,6 +242,7 @@ public class Controller extends Thread {
                 System.out.println(Arrays.deepToString(parseBoard2));
                 networkOut.writeObject("READY");
                 networkOut.writeObject(parseBoard);
+                showBothBoards();
             } catch (IOException e) {
                 System.out.println("IOException when ready");
             }
