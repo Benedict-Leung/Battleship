@@ -27,19 +27,18 @@ public class ClientConnectionHandler extends Thread {
     public void run() {
         while (true) {
             try {
-                String command = (String) in.readObject();
+                String command = String.valueOf(in.readObject());
 
                 if (command.equalsIgnoreCase("READY")) {
                     int[][] board = (int[][]) in.readObject();
                     room.ready(this, board);
                 } else if (command.equalsIgnoreCase("FIRE")) {
-                    int x = (int)in.readObject();
-                    int y = (int)in.readObject();
-                    boolean hitStatus = room.fire(this, x, y);
-                    out.writeObject("HITSTATUS");
-                    out.writeObject(hitStatus ? "hit" : "miss");
+                    if (room.getIfPlayerTurn(this)) {
+                        int x = (int)in.readObject();
+                        int y = (int)in.readObject();
+                        room.fire(this, x, y);
+                    }
                 }
-                System.out.println(command);
             } catch (IOException | ClassNotFoundException e) {
                 this.disconnect();
                 break;
@@ -47,8 +46,12 @@ public class ClientConnectionHandler extends Thread {
         }
     }
 
-    public void send(Object object) throws IOException {
-        out.writeObject(object);
+    public void send(Object object) {
+        try {
+            out.writeObject(object);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void setRoom(Room room) {

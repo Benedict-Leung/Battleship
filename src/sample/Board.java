@@ -109,12 +109,11 @@ public class Board {
     public void placeMissileAtNode(Node node, String missileStatus) {
         node.getStyleClass().add("missile");
         node.getStyleClass().add(missileStatus);
-        System.out.println("Done adding missile");
     }
 
     public boolean isInBounds(int x, int y) {
         if (x < 0 || x >= BOARD_SIZE || y < 0 || x >= BOARD_SIZE) {
-            System.out.println("Attempted to access invalid board coordinate: " + String.valueOf(x) + " " + String.valueOf(y));
+            System.out.println("Attempted to access invalid board coordinate: " + x + " " + y);
             return false;
         }
         return true;

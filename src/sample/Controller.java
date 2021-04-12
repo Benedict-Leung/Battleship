@@ -5,6 +5,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.HPos;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -87,14 +88,20 @@ public class Controller extends Thread {
                     // Both players are now ready
                     opponentShips = (int[][])networkIn.readObject();
                     opponentBoard.setShowSingleSelection(true);
-                } else if (command.equalsIgnoreCase("HITSTATUS")) {
+                } else if (command.toUpperCase().startsWith("HITSTATUS") || command.toUpperCase().startsWith("UPDATE")) {
+                    String[] coordinates = (command.toUpperCase().startsWith("HITSTATUS")) ? command.substring(10).split("\s") : command.substring(7).split("\s");
+                    int x = Integer.parseInt(coordinates[0]);
+                    int y = Integer.parseInt(coordinates[1]);
                     String hitStatus = (String) networkIn.readObject();
 
-                    //opponentBoard.placeMissileAtNode(node, hitStatus);
-                    System.out.println(hitStatus);
-                }
-                System.out.println(command);
+                    Board board = (command.toUpperCase().startsWith("HITSTATUS")) ? opponentBoard : this.board;
 
+                    for (Node node : board.getChildren())
+                        if (GridPane.getRowIndex(node) == x && GridPane.getColumnIndex(node) == y)
+                            board.placeMissileAtNode(node, hitStatus);
+                } else if (command.equalsIgnoreCase("FINISH")) {
+                    opponentBoard.setShowSingleSelection(false);
+                }
             } catch (IOException | ClassNotFoundException e) {
                 this.disconnect();
                 System.out.println("Socket closed");
@@ -127,6 +134,7 @@ public class Controller extends Thread {
 
             messageLabel = new Label("Place your ships");
             responseLabel = new Label("Waiting for opponent..."); // Used for letting the player know what is going on
+            responseLabel.setPrefHeight(50);
 
             //HBox options = new HBox();
             options.getChildren().add(comboBox);
@@ -149,9 +157,8 @@ public class Controller extends Thread {
      * After player clicks ready prepares for the game by showing both their board and opponents
      */
     public void showBothBoards(){
-        System.out.println("Both boards test!");
-
         stage.setWidth(1150);
+        stage.centerOnScreen();
         container.getChildren().remove(options);
 
         board.setShowShipSelection(false);
@@ -199,9 +206,8 @@ public class Controller extends Thread {
 
         // TODO: Communicate with server to determine if missile hit a ship or not (hitStatus = "hit" if yes, or "miss" if no)
         Node node = selectedNodes.get(0);
-        int x = GridPane.getColumnIndex(node);
-        int y = GridPane.getRowIndex(node);
-        String hitStatus;
+        int x = GridPane.getRowIndex(node);
+        int y = GridPane.getColumnIndex(node);
         try {
             networkOut.writeObject("FIRE");
             networkOut.writeObject(x);
@@ -229,7 +235,7 @@ public class Controller extends Thread {
                     board.setShowShipSelection(false);
                 }
                 messageLabel.setText("Place your ships");
-            } else {
+            } else if (board.getShowShipSelection()) {
                 messageLabel.setText("Space is already occupied");
             }
         });
