@@ -39,6 +39,7 @@ public class Controller extends Thread {
     private ArrayList<Integer> lengthOfShips = new ArrayList<>(Arrays.asList(5, 4, 3, 3, 2));
 
     private Board opponentBoard = new Board();
+    private int[][] opponentShips;
 
     HBox options = new HBox();
 
@@ -84,6 +85,7 @@ public class Controller extends Thread {
                     });
                 } else if (command.equalsIgnoreCase("START")) {
                     // Both players are now ready
+                    opponentShips = (int[][])networkIn.readObject();
                     opponentBoard.setShowSingleSelection(true);
                 }
                 System.out.println(command);
@@ -151,9 +153,10 @@ public class Controller extends Thread {
         stage.setWidth(1150);
         container.getChildren().remove(options);
 
-
         board.setShowShipSelection(false);
         opponentBoard.reset();
+
+        opponentBoard.addButtonEventHandler(MouseEvent.MOUSE_CLICKED, e -> fireMissile());
 
         Label opponentsMessageLabel = new Label("Opponents Ships");
         GridPane.setHalignment(opponentsMessageLabel, HPos.CENTER);
@@ -168,6 +171,13 @@ public class Controller extends Thread {
      */
     // TODO: This is an unfinished method (this is based off of placeShip but for the intention of firing a missile)
     public void fireMissile() {
+        if (!opponentBoard.getShowSingleSelection()) {
+            // Don't do anything if there is no selection, because both players are not ready
+            return;
+        }
+
+        // TODO: Check if it's this player's turn
+
         ArrayList<Node> selectedNodes = new ArrayList<>();
 
         for (Node node : opponentBoard.getChildren()) {
@@ -187,14 +197,21 @@ public class Controller extends Thread {
         }
 
         // TODO: Communicate with server to determine if missile hit a ship or not (hitStatus = "hit" if yes, or "miss" if no)
+        Node node = selectedNodes.get(0);
+        int x = GridPane.getColumnIndex(node);
+        int y = GridPane.getRowIndex(node);
         String hitStatus = "";
-
-        for (Node node : selectedNodes) {
-            //node.getStyleClass().add("missile");
-            //node.getStyleClass().add(hitStatus);
-            // Abstracts the process of creating a missile so that it's more centralized within the Board class
-            opponentBoard.placeMissileAtNode(node, hitStatus);
+        try {
+            networkOut.writeObject("FIRE");
+            networkOut.writeObject(x);
+            networkOut.writeObject(y);
+            hitStatus = (String)networkIn.readObject();
+            System.out.println(hitStatus);
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Exception when firing missile: " + e.toString());
+            return;
         }
+        opponentBoard.placeMissileAtNode(node, hitStatus);
     }
 
     public void resetBoard() {

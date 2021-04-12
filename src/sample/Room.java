@@ -47,8 +47,28 @@ public class Room {
         }
     }
 
+    public boolean fire(ClientConnectionHandler player, int x, int y) {
+        System.out.println("Received hit request at " + x + " " + y);
+        int[][] board = player == player1 ? player2Board : player1Board; // Opponent's board
+        if (board[x][y] == -1) {
+            System.out.println("miss");
+            return false;
+        } else {
+            System.out.println("hit");
+            return true;
+        }
+    }
+
     public void init() {
         sendAll("START");
+        // Send each player the other player's board
+        try {
+            player1.send(player2Board);
+            player2.send(player1Board);
+        } catch (IOException e) {
+            System.out.println("Failed to send a player a board: " + e.toString());
+            return;
+        }
     }
 
     public void disconnect() {

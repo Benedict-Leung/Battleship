@@ -76,6 +76,10 @@ public class Board {
      * @return True if the operation succeeded, false if it was blocked.
      */
     public boolean placeShipAtSelection() {
+        if (selectedShip == -1) {
+            return false;
+        }
+
         ArrayList<Node> selectedNodes = new ArrayList<>();
 
         for (Node node : getChildren()) {
@@ -105,6 +109,7 @@ public class Board {
     public void placeMissileAtNode(Node node, String missileStatus) {
         node.getStyleClass().add("missile");
         node.getStyleClass().add(missileStatus);
+        System.out.println("Done adding missile");
     }
 
     public boolean isInBounds(int x, int y) {

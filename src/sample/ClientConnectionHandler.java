@@ -32,6 +32,11 @@ public class ClientConnectionHandler extends Thread {
                 if (command.equalsIgnoreCase("READY")) {
                     int[][] board = (int[][]) in.readObject();
                     room.ready(this, board);
+                } else if (command.equalsIgnoreCase("FIRE")) {
+                    int x = (int)in.readObject();
+                    int y = (int)in.readObject();
+                    boolean hitStatus = room.fire(this, x, y);
+                    out.writeObject(hitStatus ? 1 : 0);
                 }
                 System.out.println(command);
             } catch (IOException | ClassNotFoundException e) {
