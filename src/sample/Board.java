@@ -63,6 +63,17 @@ public class Board {
         node.getStyleClass().add(shipName);
     }
 
+    /**
+     * Creates a missile on a Node which is a child of this Board.
+     * @param node A child of the GridPane belonging to this Board.
+     * @param missileStatus
+     */
+    // TODO: This only creates the missile on the client that fired it, just so they can keep track
+    public void placeMissileAtNode(Node node, String missileStatus) {
+        node.getStyleClass().add("missile");
+        node.getStyleClass().add(missileStatus);
+    }
+
     public boolean isInBounds(int x, int y) {
         if (x < 0 || x >= BOARD_SIZE || y < 0 || x >= BOARD_SIZE) {
             System.out.println("Attempted to access invalid board coordinate: " + String.valueOf(x) + " " + String.valueOf(y));

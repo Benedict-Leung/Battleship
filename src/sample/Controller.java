@@ -33,6 +33,7 @@ public class Controller extends Thread {
     private int length = 5;
     private String orientation = "horizontal";
     private Label messageLabel;
+    private Label responseLabel;
     private ComboBox<String> comboBox = new ComboBox<>();
     private ArrayList<Integer> lengthOfShips = new ArrayList<>(Arrays.asList(5, 4, 3, 3, 2));
 
@@ -117,6 +118,7 @@ public class Controller extends Thread {
             ready.setOnMouseClicked(e -> ready());
 
             messageLabel = new Label("Place your ships");
+            responseLabel = new Label("Waiting for opponent..."); // Used for letting the player know what is going on
 
             //HBox options = new HBox();
             options.getChildren().add(comboBox);
@@ -128,6 +130,8 @@ public class Controller extends Thread {
 
             container.add(messageLabel, 0, 0);
             GridPane.setHalignment(messageLabel, HPos.CENTER);
+            container.add(responseLabel, 0, 3);
+
             container.add(options, 0, 1);
             container.add(board.getGridPane(), 0, 2);
         });
@@ -191,6 +195,9 @@ public class Controller extends Thread {
         messageLabel.setText("Your Ships");
     }
 
+    /**
+     * Mark a ship as placed at the selected nodes
+     */
     public void placeShip() {
         ArrayList<Node> selectedNodes = new ArrayList<>();
 
@@ -215,6 +222,40 @@ public class Controller extends Thread {
         lengthOfShips.remove(comboBox.getSelectionModel().getSelectedIndex());
         comboBox.getItems().remove(comboBox.getSelectionModel().getSelectedItem());
         comboBox.getSelectionModel().selectNext();
+    }
+
+    /**
+     * Fire a missile at a selected node
+     */
+    // TODO: This is an unfinished method (this is based off of placeShip but for the intention of firing a missile)
+    public void fireMissile() {
+        ArrayList<Node> selectedNodes = new ArrayList<>();
+
+        for (Node node : opponentBoard.getChildren()) {
+            if (node.getStyleClass().contains("selected")) {
+                if (!node.getStyleClass().contains("missile")) {
+                    selectedNodes.add(node);
+                } else {
+                    responseLabel.setText("You've already fired a missile!");
+                    return;
+                }
+            }
+        }
+
+        // TODO: This can be likely be removed later based on implementation.
+        if(selectedNodes.size() != 1){
+            responseLabel.setText("You must only select one place to fire a missile!");
+        }
+
+        // TODO: Communicate with server to determine if missile hit a ship or not (hitStatus = "hit" if yes, or "miss" if no)
+        String hitStatus = "";
+
+        for (Node node : selectedNodes) {
+            //node.getStyleClass().add("missile");
+            //node.getStyleClass().add(hitStatus);
+            // Abstracts the process of creating a missile so that it's more centralized within the Board class
+            opponentBoard.placeMissileAtNode(node, hitStatus);
+        }
     }
 
     public void resetBoard() {
