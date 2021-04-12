@@ -82,6 +82,9 @@ public class Controller extends Thread {
                     Platform.runLater(() -> {
                         messageLabel.setText(message);
                     });
+                } else if (command.equalsIgnoreCase("START")) {
+                    // Both players are now ready
+                    opponentBoard.setShowSingleSelection(true);
                 }
                 System.out.println(command);
 
@@ -151,7 +154,6 @@ public class Controller extends Thread {
 
         board.setShowShipSelection(false);
         opponentBoard.reset();
-        opponentBoard.setShowSingleSelection(true);
 
         Label opponentsMessageLabel = new Label("Opponents Ships");
         GridPane.setHalignment(opponentsMessageLabel, HPos.CENTER);
