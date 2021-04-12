@@ -36,7 +36,7 @@ public class Controller extends Thread {
     private Label messageLabel;
     private Label responseLabel;
     private ComboBox<String> comboBox = new ComboBox<>();
-    private ArrayList<Integer> lengthOfShips = new ArrayList<>(Arrays.asList(5, 4, 3, 3, 2));
+    public  ArrayList<String> shipNames = new ArrayList<>(Arrays.asList("Aircraft Carrier", "Battleship", "Submarine", "Cruiser", "Destroyer"));
 
     private Board opponentBoard = new Board();
     private int[][] opponentShips;
@@ -81,12 +81,17 @@ public class Controller extends Thread {
                     String message = (String) networkIn.readObject();
 
                     Platform.runLater(() -> {
-                        messageLabel.setText(message);
+                        responseLabel.setText(message);
                     });
                 } else if (command.equalsIgnoreCase("START")) {
                     // Both players are now ready
                     opponentShips = (int[][])networkIn.readObject();
                     opponentBoard.setShowSingleSelection(true);
+                } else if (command.equalsIgnoreCase("HITSTATUS")) {
+                    String hitStatus = (String) networkIn.readObject();
+
+                    //opponentBoard.placeMissileAtNode(node, hitStatus);
+                    System.out.println(hitStatus);
                 }
                 System.out.println(command);
 
@@ -106,12 +111,8 @@ public class Controller extends Thread {
             resetBoard();
 
             comboBox.setOnAction((event) -> {
-                int index = comboBox.getSelectionModel().getSelectedIndex();
-                if (index != -1) {
-                    board.setSelectedShip(0);
-                } else {
-                    board.setSelectedShip(-1);
-                }
+                int index = shipNames.indexOf(comboBox.getSelectionModel().getSelectedItem());
+                board.setSelectedShip(index);
             });
 
             Button rotate = new Button("Rotate");
@@ -200,18 +201,16 @@ public class Controller extends Thread {
         Node node = selectedNodes.get(0);
         int x = GridPane.getColumnIndex(node);
         int y = GridPane.getRowIndex(node);
-        String hitStatus = "";
+        String hitStatus;
         try {
             networkOut.writeObject("FIRE");
             networkOut.writeObject(x);
             networkOut.writeObject(y);
-            hitStatus = (String)networkIn.readObject();
-            System.out.println(hitStatus);
-        } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Exception when firing missile: " + e.toString());
+        } catch (IOException e) {
+            System.out.println("Exception when firing missile: ");
+            e.printStackTrace();
             return;
         }
-        opponentBoard.placeMissileAtNode(node, hitStatus);
     }
 
     public void resetBoard() {
@@ -221,7 +220,6 @@ public class Controller extends Thread {
             boolean result = board.placeShipAtSelection();
             if (result) {
                 // Ship was successfully placed
-                lengthOfShips.remove(comboBox.getSelectionModel().getSelectedIndex());
                 comboBox.getItems().remove(comboBox.getSelectionModel().getSelectedItem());
                 if (comboBox.getItems().size() > 0) {
                     // There are more ships we can place
@@ -236,7 +234,7 @@ public class Controller extends Thread {
             }
         });
 
-        lengthOfShips = new ArrayList<>(Arrays.asList(5, 4, 3, 3, 2));
+        shipNames = new ArrayList<>(Arrays.asList("Aircraft Carrier", "Battleship", "Submarine", "Cruiser", "Destroyer"));
         comboBox.getItems().removeAll(comboBox.getItems());
         comboBox.getItems().add("Aircraft Carrier");
         comboBox.getItems().add("Battleship");

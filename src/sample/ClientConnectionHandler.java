@@ -36,7 +36,8 @@ public class ClientConnectionHandler extends Thread {
                     int x = (int)in.readObject();
                     int y = (int)in.readObject();
                     boolean hitStatus = room.fire(this, x, y);
-                    out.writeObject(hitStatus ? 1 : 0);
+                    out.writeObject("HITSTATUS");
+                    out.writeObject(hitStatus ? "hit" : "miss");
                 }
                 System.out.println(command);
             } catch (IOException | ClassNotFoundException e) {

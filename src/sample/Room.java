@@ -35,7 +35,6 @@ public class Room {
 
     public void ready(ClientConnectionHandler player, int[][] board) {
         numReady++;
-        System.out.println(Arrays.deepToString(board));
         if (player1 == player) {
             player1Board = board;
         } else {
