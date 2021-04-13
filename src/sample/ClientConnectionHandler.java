@@ -11,6 +11,11 @@ public class ClientConnectionHandler extends Thread {
     protected ObjectOutputStream out = null;
     protected ObjectInputStream in = null;
 
+    /**
+     * Constructor of the ClientConnectionHandler and initializes streams
+     *
+     * @param socket The client's socket
+     */
     public ClientConnectionHandler(Socket socket) {
         super();
         this.socket = socket;
@@ -24,15 +29,18 @@ public class ClientConnectionHandler extends Thread {
         this.start();
     }
 
+    /**
+     * Parse incoming commands
+     */
     public void run() {
         while (true) {
             try {
                 String command = String.valueOf(in.readObject());
 
-                if (command.equalsIgnoreCase("READY")) {
+                if (command.equalsIgnoreCase("READY")) { // Tells room player is ready
                     int[][] board = (int[][]) in.readObject();
                     room.ready(this, board);
-                } else if (command.equalsIgnoreCase("FIRE")) {
+                } else if (command.equalsIgnoreCase("FIRE")) { // Send fire coordinates to room
                     if (room.getIfPlayerTurn(this)) {
                         int x = (int)in.readObject();
                         int y = (int)in.readObject();
@@ -46,6 +54,11 @@ public class ClientConnectionHandler extends Thread {
         }
     }
 
+    /**
+     * Send commands to player
+     *
+     * @param object The object to send to player
+     */
     public void send(Object object) {
         try {
             out.writeObject(object);
@@ -54,10 +67,18 @@ public class ClientConnectionHandler extends Thread {
         }
     }
 
+    /**
+     * Set the room
+     *
+     * @param room The room
+     */
     public void setRoom(Room room) {
         this.room = room;
     }
 
+    /**
+     * Closes streams and socket
+     */
     public void disconnect() {
         try {
             in.close();
@@ -66,7 +87,9 @@ public class ClientConnectionHandler extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            room.disconnect();
+            if (room != null) {
+                room.disconnect();
+            }
         }
     }
 

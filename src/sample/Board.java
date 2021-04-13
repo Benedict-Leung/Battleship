@@ -24,47 +24,38 @@ public class Board {
     private int selectedShip = 0;
 
     public static final int BOARD_SIZE = 10;
-    public static final ArrayList<String> SHIP_NAMES = new ArrayList<>(Arrays.asList("Aircraft Carrier", "Battleship", "Submarine", "Cruiser", "Destroyer"));
     public static final ArrayList<String> SHIP_STYLES = new ArrayList<>(Arrays.asList("aircraftcarrier", "battleship", "submarine", "cruiser", "destroyer"));
     public static final ArrayList<Integer> SHIP_LENGTHS = new ArrayList<>(Arrays.asList(5, 4, 3, 3, 2));
 
+    /**
+     * Constructor of board
+     */
     public Board() {
         gridPane = new GridPane();
     }
 
+    /**
+     * Return grid pane
+     * @return The grid pane
+     */
     public GridPane getGridPane() {
         return gridPane;
     }
 
+    /**
+     * Gets all the children of the grid pane
+     *
+     * @return All the children of the grid pane
+     */
     public ObservableList<Node> getChildren() {
         return gridPane.getChildren();
     }
 
-    public Node getChildAtCoord(int x, int y) {
-        if (!isInBounds(x, y))
-            return null;
-        return gridPane.getChildren().get(x + (y * BOARD_SIZE));
-    }
-
-    /**
-     * Creates a ship on a Node at the specified coordinates (origin top-left).
-     * @param x
-     * @param y
-     * @param shipName
-     */
-    public void placeShipAtCoord(int x, int y, String shipName) {
-        Node node = getChildAtCoord(x, y);
-        if (node == null) {
-            // Bounds check failed in getChildAtCoord()
-            return;
-        }
-        placeShipAtNode(node, shipName);
-    }
-
     /**
      * Creates a ship on a Node which is a child of this Board.
+     *
      * @param node A child of the GridPane belonging to this Board.
-     * @param shipName
+     * @param shipName The ship name
      */
     public void placeShipAtNode(Node node, String shipName) {
         node.getStyleClass().add("ship");
@@ -73,6 +64,7 @@ public class Board {
 
     /**
      * Automatically places the currently selected ship at all currently selected squares on the board.
+     *
      * @return True if the operation succeeded, false if it was blocked.
      */
     public boolean placeShipAtSelection() {
@@ -102,21 +94,13 @@ public class Board {
 
     /**
      * Creates a missile on a Node which is a child of this Board.
+     *
      * @param node A child of the GridPane belonging to this Board.
-     * @param missileStatus
+     * @param missileStatus The status of the missile (miss/hit)
      */
-    // TODO: This only creates the missile on the client that fired it, just so they can keep track
     public void placeMissileAtNode(Node node, String missileStatus) {
         node.getStyleClass().add("missile");
         node.getStyleClass().add(missileStatus);
-    }
-
-    public boolean isInBounds(int x, int y) {
-        if (x < 0 || x >= BOARD_SIZE || y < 0 || x >= BOARD_SIZE) {
-            System.out.println("Attempted to access invalid board coordinate: " + x + " " + y);
-            return false;
-        }
-        return true;
     }
 
     /**
@@ -152,12 +136,16 @@ public class Board {
                 gridPane.add(button, i, j);
 
                 button.addEventHandler(MouseEvent.MOUSE_ENTERED, e -> onButtonMouseEntered(e));
-                button.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> onButtonMouseClicked(e));
                 button.addEventHandler(MouseEvent.MOUSE_EXITED, e -> onButtonMouseExited(e));
             }
         }
     }
 
+    /**
+     * Displays nodes based on type of selection (single/ship) by adding a style class, 'selected'
+     *
+     * @param e The mouse event
+     */
     protected void onButtonMouseEntered(MouseEvent e) {
         if (showSingleSelection) {
             Node node = (Node)e.getSource();
@@ -174,6 +162,7 @@ public class Board {
             }
             int length = SHIP_LENGTHS.get(selectedShip);
 
+            // Check if the ship is not out of the grid (i.e. Cursor on the edge). If so, move source coordinate accordingly
             if (shipPlacementOrientation.equalsIgnoreCase("horizontal")) {
                 if (sourceCol < length / 2) {
                     sourceCol += length / 2 - sourceCol;
@@ -188,16 +177,19 @@ public class Board {
                 }
             }
 
+            // Depending on the orientation it will display the ship by adding a style class
             for (int k = 0; k < length; k++) {
                 for (Node node : getChildren()) {
                     if (!node.getStyleClass().contains("selected")) {
                         if (shipPlacementOrientation.equalsIgnoreCase("horizontal")) {
+                            // Select nodes left and right
                             if (GridPane.getColumnIndex(node) == sourceCol - Math.ceil((double) k / 2) && GridPane.getRowIndex(node) == sourceRow
                                     || GridPane.getColumnIndex(node) == sourceCol + Math.ceil((double) k / 2) && GridPane.getRowIndex(node) == sourceRow) {
                                 node.getStyleClass().add("selected");
                                 break;
                             }
                         } else {
+                            // Select nodes up and down
                             if (GridPane.getRowIndex(node) == sourceRow - Math.ceil((double) k / 2) && GridPane.getColumnIndex(node) == sourceCol
                                     || GridPane.getRowIndex(node) == sourceRow + Math.ceil((double) k / 2) && GridPane.getColumnIndex(node) == sourceCol) {
                                 node.getStyleClass().add("selected");
@@ -210,17 +202,27 @@ public class Board {
         }
     }
 
-    protected void onButtonMouseClicked(MouseEvent e) {
-
-    }
-
+    /**
+     * Clears style class when mouse exits the node
+     *
+     * @param e     The MouseEvent
+     */
     protected void onButtonMouseExited(MouseEvent e) {
         if (showSingleSelection) {
             Node node = (Node)e.getSource();
             node.getStyleClass().remove("selected");
+        } else if (showShipSelection) {
+            for (Node node : getChildren())
+                node.getStyleClass().remove("selected");
         }
     }
 
+    /**
+     * Add event handler to node
+     *
+     * @param eventType         The event type
+     * @param eventHandler      The event handler
+     */
     public <T extends Event> void addButtonEventHandler(EventType<T> eventType, EventHandler<? super T> eventHandler) {
         for (Node node : gridPane.getChildren()) {
             Button button = (Button)node;
@@ -249,31 +251,19 @@ public class Board {
     }
 
     /**
-     * Creates a Board instance representing the int array provided
-     * @param intArray
-     * @return
+     * Return if single selection is showing
+     *
+     * @return if single selection is showing
      */
-    public static Board fromIntArray(int[][] intArray) {
-        Board board = new Board();
-        board.reset();
-
-        for (int x = 0; x < BOARD_SIZE; x++) {
-            for (int y = 0; y < BOARD_SIZE; y++) {
-                int shipType = intArray[x][y];
-                if (shipType != -1) {
-                    // If there is a ship here
-                    board.placeShipAtCoord(x, y, SHIP_STYLES.get(shipType));
-                }
-            }
-        }
-
-        return board;
-    }
-
     public boolean getShowSingleSelection() {
         return showSingleSelection;
     }
 
+    /**
+     * Sets single selection status
+     *
+     * @param value Single selection status
+     */
     public void setShowSingleSelection(boolean value) {
         showSingleSelection = value;
         if (!value) {
@@ -282,10 +272,20 @@ public class Board {
         }
     }
 
+    /**
+     * Return if ship selection is showing
+     *
+     * @return if ship selection is showing
+     */
     public boolean getShowShipSelection() {
         return showShipSelection;
     }
 
+    /**
+     * Sets ship selection status
+     *
+     * @param value Ship selection status
+     */
     public void setShowShipSelection(boolean value) {
         showShipSelection = value;
         if (!value) {
@@ -294,18 +294,18 @@ public class Board {
         }
     }
 
-    public String getShipPlacementOrientation() {
-        return shipPlacementOrientation;
-    }
-
+    /**
+     * Toggles ship orientation
+     */
     public void toggleShipPlacementOrientation() {
         shipPlacementOrientation = shipPlacementOrientation.equalsIgnoreCase("horizontal") ? "vertical" : "horizontal";
     }
 
-    public int getSelectedShip() {
-        return selectedShip;
-    }
-
+    /**
+     * Sets the ship
+     *
+     * @param value The index of the ship
+     */
     public void setSelectedShip(int value) {
         selectedShip = value;
     }

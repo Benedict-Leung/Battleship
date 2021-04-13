@@ -1,0 +1,20 @@
+Label.title {
+    -fx-padding: 20;
+    -fx-border-color: black;
+    -fx-border-width: 1;
+}
+
+Button.connect, Button.exit {
+    -fx-padding: 10;
+    -fx-background-color: transparent;
+    -fx-border-color: black;
+    -fx-border-width: 1;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+}
+
+Button.connect:hover, Button.exit:hover {
+    -fx-background-color: gray;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+}

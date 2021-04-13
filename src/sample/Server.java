@@ -23,6 +23,7 @@ public class Server {
                 ClientConnectionHandler client = new ClientConnectionHandler(clientSocket);
                 numClients++;
 
+                // If there are even amount of clients take two clients to start a room
                 if (numClients % 2 == 0) {
                     try {
                         waitingClient.out.writeObject("Connect");
