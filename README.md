@@ -72,4 +72,4 @@ Upon one player's ships all sinking the winner will be notified in the bottom le
 ![Game Over](ImageResources/winningScreen.PNG)
 
 ## Other Resources
-Placeholder
+https://www.jetbrains.com/help/idea/javafx.html
